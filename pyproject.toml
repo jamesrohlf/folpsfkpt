@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "folpsfkpt"
+version = "0.0.1.dev0"
+description = "Shared FOLPS / fkpt pipeline with switchable loop engines"
+requires-python = ">=3.10"
+dependencies = ["jax", "numpy"]
+
+[project.optional-dependencies]
+fftlog = ["folps"]
+quadrature = ["fkptjax", "folps"]
+test = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+markers = ["slow: runs the full engines (minutes)"]
