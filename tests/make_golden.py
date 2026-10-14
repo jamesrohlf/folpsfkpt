@@ -28,6 +28,7 @@ PARS = [B1, -0.46, -4.0 / 7.0 * (B1 - 1.0), 32.0 / 315.0 * (B1 - 1.0),
 CASES = {
     "folps_afull": dict(engine="folps", A_full=True),
     "folps_noafull": dict(engine="folps", A_full=False),
+    "folps_tns": dict(engine="folps", A_full=True, use_TNS_model=True, model="TNS"),
     "fkpt_lcdm": dict(engine="fkpt", model="LCDM"),
     "fkpt_hs_fr5": dict(engine="fkpt", model="HS", fR0_HS=1e-5, rescale_PS=True),
 }
@@ -45,17 +46,17 @@ def load_inputs():
     return k, pk, pknow
 
 
-def run_folps(k, pk, pknow, A_full):
+def run_folps(k, pk, pknow, A_full, use_TNS_model=False, model="FOLPSD"):
     import jax.numpy as jnp
     import numpy as np
     from folps import (MatrixCalculator, NonLinearPowerSpectrumCalculator,
                        RSDMultipolesPowerSpectrumCalculator)
 
-    mm = MatrixCalculator(A_full=A_full).get_mmatrices()
+    mm = MatrixCalculator(A_full=A_full, use_TNS_model=use_TNS_model).get_mmatrices()
     nl = NonLinearPowerSpectrumCalculator(mmatrices=mm, kernels="fk", **COSMO)
     table, table_now = nl.calculate_loop_table(k=jnp.asarray(k), pklin=jnp.asarray(pk),
                                                pknow=jnp.asarray(pknow), cosmo=None, **COSMO)
-    poles = RSDMultipolesPowerSpectrumCalculator(model="FOLPSD").get_rsd_pkell(
+    poles = RSDMultipolesPowerSpectrumCalculator(model=model).get_rsd_pkell(
         kobs=jnp.asarray(k), qpar=1.0, qper=1.0, pars=jnp.asarray(PARS),
         table=table, table_now=table_now, bias_scheme="folps", damping="lor")
     return table, table_now, np.asarray(poles)

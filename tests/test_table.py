@@ -63,13 +63,10 @@ def test_pytree_flags_are_static():
     assert np.array_equal(np.asarray(out.wiggle.P_dd), table[3])
 
 
-def folps_poles(lt, k, pars):
-    import folps.folps as _folps
+def folps_poles(lt, k, pars, model="FOLPSD"):
     from folps import RSDMultipolesPowerSpectrumCalculator
-    # FOLPS RSD still reads module globals; set them from the table's own flags.
-    _folps.A_full_status, _folps.use_TNS_model_status = lt.A_full, lt.use_TNS_model
     table, table_now = lt.to_folps_tuples()
-    return RSDMultipolesPowerSpectrumCalculator(model="FOLPSD").get_rsd_pkell(
+    return RSDMultipolesPowerSpectrumCalculator(model=model, use_TNS_model=lt.use_TNS_model).get_rsd_pkell(
         kobs=jnp.asarray(k), qpar=1.0, qper=1.0, pars=jnp.asarray(pars),
         table=table, table_now=table_now, bias_scheme="folps", damping="lor")
 
@@ -91,8 +88,9 @@ def test_engine_reproduces_golden(name):
     k, pk, pknow, pars = g["k_in"], g["pk_in"], g["pknow_in"], g["pars"]
     opts = dict(CASES[name])
     if opts.pop("engine") == "folps":
+        model = opts.pop("model", "FOLPSD")
         lt = FFTLogEngine(**opts)(jnp.asarray(k), jnp.asarray(pk), jnp.asarray(pknow), **COSMO)
-        poles = folps_poles(lt, k, pars)
+        poles = folps_poles(lt, k, pars, model=model)
     else:
         lt = QuadratureEngine(**opts)(k, pk, pknow, **COSMO)
         poles = fkpt_poles(lt, k, pars)

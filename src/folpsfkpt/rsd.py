@@ -24,11 +24,8 @@ def check_rsd_options(table, model, damping):
 
 
 def _folps_calculator(table, model):
-    import folps.folps as _folps
     from folps import RSDMultipolesPowerSpectrumCalculator
-    # FOLPS RSD still reads module globals; set them from the table's own flags.
-    _folps.A_full_status, _folps.use_TNS_model_status = table.A_full, table.use_TNS_model
-    return RSDMultipolesPowerSpectrumCalculator(model=model)
+    return RSDMultipolesPowerSpectrumCalculator(model=model, use_TNS_model=table.use_TNS_model)
 
 
 def pkmu(table, kap, muap, pars, *, model="FOLPSD", damping="lor", bias_scheme="folps",

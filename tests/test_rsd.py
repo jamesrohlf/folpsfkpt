@@ -36,6 +36,14 @@ def test_folpsd_route_reproduces_folps_golden(name):
     assert_poles_close(poles, g["poles"])
 
 
+def test_tns_route_reproduces_upstream_golden():
+    """Upstream reached TNS via a global set by MatrixCalculator; now the flag rides on the table."""
+    g, table, table_now = load_golden("folps_tns")
+    lt = LoopTable.from_folps_tuples(table, table_now, use_TNS_model=True)
+    poles = pk_multipoles(lt, jnp.asarray(g["k_in"]), jnp.asarray(g["pars"]), model="TNS", damping="lor")
+    assert_poles_close(poles, g["poles"])
+
+
 @pytest.mark.parametrize("name", ["fkpt_lcdm", "fkpt_hs_fr5"])
 def test_eft_route_reproduces_fkpt_golden(name):
     g, lt = golden_table(name)
