@@ -82,7 +82,7 @@ def fkpt_poles(lt, k, pars):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("name", list(CASES))
+@pytest.mark.parametrize("name", [n for n, c in CASES.items() if c["engine"] in ("folps", "fkpt")])
 def test_engine_reproduces_golden(name):
     g, table, table_now = load_golden(name)
     k, pk, pknow, pars = g["k_in"], g["pk_in"], g["pknow_in"], g["pars"]

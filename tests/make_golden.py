@@ -31,6 +31,11 @@ CASES = {
     "folps_tns": dict(engine="folps", A_full=True, use_TNS_model=True, model="TNS"),
     "fkpt_lcdm": dict(engine="fkpt", model="LCDM"),
     "fkpt_hs_fr5": dict(engine="fkpt", model="HS", fR0_HS=1e-5, rescale_PS=True),
+    # fkptjax's jax-traceable builders, called directly
+    "fkptjax_jax_mu0": dict(engine="fkpt_builder", builder="Kfuncs_to_tables_jax",
+                            model="HDKI", mg_variant="mu_OmDE", mu0=0.3),
+    "fkptjax_rescale_mu0": dict(engine="fkpt_builder", builder="Kfuncs_to_tables_rescale_jax",
+                                model="HDKI", mg_variant="mu_OmDE", mu0=0.3),
 }
 
 
@@ -75,6 +80,28 @@ def run_fkpt(k, pk, pknow, **mg):
     return state.table_w, state.table_now, np.asarray(poles)
 
 
+def fkpt_tables_to_poles(k, table_w, table_now):
+    import jax.numpy as jnp
+    import numpy as np
+    from fkptjax.rsd import tables_to_poles
+
+    x, w = np.polynomial.legendre.leggauss(6)
+    mu, wmu = 0.5 * (x + 1.0), 0.5 * w
+    table_all = tuple(table_w) + tuple(table_now)
+    return np.asarray(tables_to_poles(1.0, jnp.asarray(k)[:, None], jnp.asarray(mu)[None, :], jnp.asarray(PARS),
+                                      table_all, mu, wmu, ncols=len(table_w), bias_scheme="folps",
+                                      IR_resummation=True, damping=None, ells=(0, 2, 4)))
+
+
+def run_fkpt_builder(k, pk, pknow, builder, **opts):
+    from fkptjax import kfuncs_to_tables
+
+    out = getattr(kfuncs_to_tables, builder)(k, pk, pknow, z=COSMO["z"], Om=COSMO["Omega_m"],
+                                             return_kernel_constants=False, **opts)
+    table_w, table_now = out[:2]
+    return table_w, table_now, fkpt_tables_to_poles(k, table_w, table_now)
+
+
 def run_case(name):
     import jax
     import numpy as np
@@ -85,6 +112,8 @@ def run_case(name):
     k, pk, pknow = load_inputs()
     if engine == "folps":
         table, table_now, poles = run_folps(k, pk, pknow, **opts)
+    elif engine == "fkpt_builder":
+        table, table_now, poles = run_fkpt_builder(k, pk, pknow, **opts)
     else:
         table, table_now, poles = run_fkpt(k, pk, pknow, **opts)
     out = dict(k_in=k, pk_in=pk, pknow_in=pknow, poles=poles, pars=np.asarray(PARS))
