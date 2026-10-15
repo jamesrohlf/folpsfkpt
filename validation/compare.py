@@ -15,10 +15,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from usecases import CASES, DATA   # noqa: E402
 
 
+FLOOR = 1e-6   # rows below FLOOR x the point's largest value are analytically zero (e.g. dP2/d shot noise)
+
+
 def rel_diff(new, up):
-    """(npoint,) worst relative difference; rows are the leading non-point axis."""
-    n, u = new.reshape(len(new), new.shape[1] if new.ndim > 2 else 1, -1), up.reshape(len(up), up.shape[1] if up.ndim > 2 else 1, -1)
+    """(npoint,) worst relative difference; each row (all axes but the last) gets its own scale.
+
+    Row scales are floored at FLOOR x the largest |value| of that point's output, so rows that are
+    zero up to rounding (~1e-15 of the largest value) are not reported as O(1) disagreements.
+    """
+    n, u = new.reshape(len(new), -1, new.shape[-1]), up.reshape(len(up), -1, up.shape[-1])
     scale = np.max(np.abs(u), axis=-1, keepdims=True)
+    scale = np.maximum(scale, FLOOR * np.max(scale, axis=1, keepdims=True))
     return np.max(np.abs(n - u) / np.where(scale > 0, scale, 1.), axis=(1, 2))
 
 
@@ -31,6 +39,11 @@ def main(rtol=1e-7):
             up, new = np.load(DATA / f"upstream_{case}.npz"), np.load(DATA / f"new_{case}.npz")
         except FileNotFoundError:
             print(f"{case:22s} missing")
+            ok = False
+            continue
+        if len(next(up[o] for o in up.files if o not in ("failed", "seconds"))) != \
+                len(next(new[o] for o in new.files if o not in ("failed", "seconds"))):
+            print(f"{case:22s} point counts differ (a run is still going)")
             ok = False
             continue
         fail = f"{len(up['failed'])}/{len(new['failed'])}"
