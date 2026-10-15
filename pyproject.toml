@@ -4,15 +4,27 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "folpsfkpt"
-version = "0.0.1.dev0"
-description = "Shared FOLPS / fkpt pipeline with switchable loop engines"
+version = "0.1.0"
+description = "One pipeline for FOLPS and fkpt: shared pre/post-processing, switchable loop engines (FFTLog | quadrature)"
+readme = "README.md"
+license = {text = "BSD-3-Clause"}
+authors = [{name = "James Rohlf", email = "rohlf@bu.edu"}]
 requires-python = ">=3.10"
-dependencies = ["jax", "numpy"]
+# FolpsD and fkptjax with the unified-pipeline changes; switch to the upstream repos once merged there.
+dependencies = [
+    "jax",
+    "numpy",
+    "scipy",
+    "folps @ git+https://github.com/jamesrohlf/FolpsD@unified-pipeline",
+    "fkptjax @ git+https://github.com/jamesrohlf/fkptjax_muMG@unified-pipeline",
+]
 
 [project.optional-dependencies]
-fftlog = ["folps"]
-quadrature = ["fkptjax", "folps"]
+examples = ["matplotlib"]
 test = ["pytest"]
+
+[project.urls]
+Repository = "https://github.com/jamesrohlf/folpsfkpt"
 
 [tool.setuptools.packages.find]
 where = ["src"]
