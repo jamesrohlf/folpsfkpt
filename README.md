@@ -338,7 +338,7 @@ points (each output row normalised by its own maximum):
 | bispectrum: FOLPS Sugiyama, fkpt Sugiyama, fkpt Scoccimarro | 100 each | 3.2e-13 |
 | FOLPS options: eager, classpt / desi biases, no IR, EdS kernels, loop+ctr+GTNS, `damping_method="all"`, TNS without A_full, TNS tables with FOLPSD | 30 each | 2.0e-14 |
 | analytic marginalisation (const / derivatives), incl. TNS tables | 30 each | 2.5e-14 / 4.5e-10 |
-| fkpt: rescale builder, nDGP, HS beyond-EdS, growth index; HS full kernels | 30; 10 | 2.9e-14 |
+| fkpt: rescale builder, nDGP, HS beyond-EdS, growth index; HS full kernels | 30; 100 | 2.9e-14 |
 | bispectrum: FOLPS Scoccimarro, `mg_kernel_fn` branch | 30 each | 3.2e-13 |
 | gradients (`jacrev` FOLPS, FOLPS-TNS; `jacfwd` fkpt JAX builder) | 30, 30, 10 | 2.2e-10 |
 
